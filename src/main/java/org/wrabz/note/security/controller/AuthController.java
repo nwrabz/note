@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @RestController
 @RequestMapping("api/auth")
+//@CrossOrigin(origins = "hhtp://localhost:3000", maxAge = 3600, allowCredentials = "true")
 public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
