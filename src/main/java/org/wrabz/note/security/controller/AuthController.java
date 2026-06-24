@@ -27,7 +27,7 @@ import org.wrabz.note.security.payload.response.LoginResponse;
 import org.wrabz.note.security.payload.response.MessageResponse;
 import org.wrabz.note.security.payload.response.UserInfoResponse;
 import org.wrabz.note.security.service.UserDetailsImpl;
-import org.wrabz.note.security.service.UserService;
+import org.wrabz.note.service.UserService;
 
 import java.time.LocalDate;
 import java.util.HashMap;

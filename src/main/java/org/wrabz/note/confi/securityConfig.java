@@ -34,7 +34,7 @@ import java.time.LocalDate;
 @EnableMethodSecurity(prePostEnabled = true, securedEnabled = true, jsr250Enabled = true)
 public class securityConfig {
 
-   private final AuthEntryPointJwt unauthorizedHandler;
+    private final AuthEntryPointJwt unauthorizedHandler;
     private final UserDetailsServiceImpl userDetailsService;
     private final JwtUtils jwtUtils;
 
