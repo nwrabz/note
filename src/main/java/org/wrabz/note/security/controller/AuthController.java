@@ -147,7 +147,6 @@ public class AuthController {
                 user.isTwoFactorEnabled(),
                 roles
         );
-
         return ResponseEntity.ok().body(response);
     }
 
@@ -158,5 +157,28 @@ public class AuthController {
                 : "User not available";
 
         return ResponseEntity.ok().body(usernameAndPassword);
+    }
+
+    @PostMapping("/public/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestParam String email){
+        try {
+            userService.generatePasswordRestToken(email);
+            return ResponseEntity.ok(new MessageResponse("Password reset email sent."));
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new MessageResponse("Error sending password reset emails"));
+        }
+    }
+
+    @PostMapping("/public/reset-password")
+    public ResponseEntity<?> restPassword(@RequestParam String token,
+                                            @RequestParam String newPassword){
+        try {
+            userService.resetPassword(token, newPassword);
+            return ResponseEntity.ok(new MessageResponse("Password reset successfully"));
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new MessageResponse(e.getMessage()));
+        }
     }
 }

@@ -1,24 +1,36 @@
 package org.wrabz.note.service;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.wrabz.note.exception.ResourceNotFoundException;
 import org.wrabz.note.model.AppRole;
+import org.wrabz.note.model.PasswordResetToken;
 import org.wrabz.note.model.Role;
 import org.wrabz.note.model.User;
+import org.wrabz.note.repository.PasswordResetTokenRepository;
 import org.wrabz.note.repository.RoleRepository;
 import org.wrabz.note.repository.UserRepository;
+import org.wrabz.note.util.EmailService;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.UUID;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService{
+
+    @Value("${frontend.url}")
+    String frontendUrl;
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final EmailService emailService;
 
     @Override
     public List<User> getAllUsers() {
@@ -99,5 +111,38 @@ public class UserServiceImpl implements UserService{
     @Override
     public List<Role> getAllRoles() {
         return roleRepository.findAll();
+    }
+
+    @Override
+    public void generatePasswordRestToken(String email){
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        String token = UUID.randomUUID().toString();
+        Instant expiryDate = Instant.now().plus(24, ChronoUnit.HOURS);
+        PasswordResetToken resetToken = new PasswordResetToken(token, expiryDate, user);
+        passwordResetTokenRepository.save(resetToken);
+
+        String resetUrl = frontendUrl + "/reset-password?token=" + token;
+        //email to user
+        emailService.sendPasswordResetEmail(user.getEmail(), resetUrl);
+    }
+
+    @Override
+    public void resetPassword(String token, String newPassword) {
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
+                .orElseThrow(() -> new RuntimeException("Invalid password reset token"));
+        if (resetToken.isUsed())
+            throw new RuntimeException("Password reset token has already been used");
+
+        if (resetToken.getExpiryDate().isBefore(Instant.now()))
+            throw new RuntimeException("Password reset token has expired.");
+
+        User user = resetToken.getUser();
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        resetToken.setUsed(true);
+        passwordResetTokenRepository.save(resetToken);
     }
 }
